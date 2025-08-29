@@ -9,8 +9,8 @@ export default function Page() {
   const [newText, setNewText] = useState("");
   const [selectedOwner, setSelectedOwner] = useState<string>("");
 
-  // Fetch todos
-  const fetchTodos = async () => {
+  // Fetch todos and users in a single GraphQL request
+  const fetchData = async () => {
     const res = await fetch("/api/graphql", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -21,10 +21,11 @@ export default function Page() {
               id
               text
               done
-              owner {
-                id
-                name
-              }
+              owner { id name }
+            }
+            users {
+              id
+              name
             }
           }
         `,
@@ -32,16 +33,8 @@ export default function Page() {
     });
     const json = await res.json();
     setTodos(json.data.todos);
-  };
-
-  // Fetch users (simulate fetching from DB)
-  const fetchUsers = async () => {
-    // We can hardcode users since it's in-memory, or expose a users query in GraphQL
-    setUsers([
-      { id: "1", name: "Alice" },
-      { id: "2", name: "Bob" },
-    ]);
-    setSelectedOwner("1"); // default owner
+    setUsers(json.data.users);
+    setSelectedOwner(json.data.users[0]?.id || "");
   };
 
   // Add todo
@@ -58,10 +51,7 @@ export default function Page() {
               id
               text
               done
-              owner {
-                id
-                name
-              }
+              owner { id name }
             }
           }
         `,
@@ -74,8 +64,7 @@ export default function Page() {
   };
 
   useEffect(() => {
-    fetchUsers();
-    fetchTodos();
+    fetchData();
   }, []);
 
   return (
